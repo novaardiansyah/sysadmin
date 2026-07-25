@@ -12,3 +12,6 @@ AGENTS.md
 .env.production
 .env.local
 .env.staging
+
+__pycache__
+backups/
