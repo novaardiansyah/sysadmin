@@ -1,0 +1,14 @@
+.nova/
+.antigravity/
+.vscode/
+
+setup.sh
+Makefile
+
+CLAUDE.md
+AGENTS.md
+
+.env
+.env.production
+.env.local
+.env.staging
