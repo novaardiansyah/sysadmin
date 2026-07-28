@@ -16,12 +16,15 @@ def run_backup_job(job: dict):
   started = datetime.now()
 
   try:
+    dest_path = Path(dest_dir)
+    dest_path.mkdir(parents=True, exist_ok=True)
+
     if expected_filename:
       filename = expected_filename[:-4] if expected_filename.endswith(".zip") else expected_filename
     else:
       filename = f"backup-{started.strftime('%Y%m%d-%H%M%S')}"
 
-    destination = str(Path(dest_dir) / filename)
+    destination = str(dest_path / filename)
     zip_file    = create_zip(source_path, destination)
     completed   = datetime.now()
     duration    = int((completed - started).total_seconds())
@@ -69,9 +72,12 @@ def run_backup(source_path: str | dict):
   started = datetime.now()
 
   try:
+    dest_path = Path(BACKUP_OUTPUT)
+    dest_path.mkdir(parents=True, exist_ok=True)
+
     filename = f"backup-{started.strftime('%Y%m%d-%H%M%S')}"
 
-    destination = str(Path(BACKUP_OUTPUT) / filename)
+    destination = str(dest_path / filename)
     zip_file    = create_zip(source_path, destination)
     completed   = datetime.now()
     duration    = int((completed - started).total_seconds())
