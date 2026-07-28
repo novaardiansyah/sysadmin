@@ -11,5 +11,6 @@ class BackupResult:
   duration: int
   status: str
   type: str
-  message: str | None
+  message: str | None = None
+  finished_at: str | None = None
   

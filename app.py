@@ -1,4 +1,15 @@
-from config import TEST_BACKUP_PATH
-from backup.backup import run_backup
+from api.report import check_schedule
+from backup.backup import run_backup_job
 
-run_backup(TEST_BACKUP_PATH)
+def main():
+  jobs = check_schedule()
+
+  if not jobs:
+    print("No backup schedules are due.")
+    return
+
+  for job in jobs:
+    run_backup_job(job)
+
+if __name__ == "__main__":
+  main()
