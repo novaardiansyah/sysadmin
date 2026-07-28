@@ -5,6 +5,7 @@ from backup.zip import create_zip
 from models.backup_result import BackupResult
 from utils.checksum import sha256
 from api.report import send_backup, store_job_report
+from storage.r2 import upload_file
 from config import BACKUP_OUTPUT
 
 def run_backup_job(job: dict):
@@ -29,6 +30,12 @@ def run_backup_job(job: dict):
     completed   = datetime.now()
     duration    = int((completed - started).total_seconds())
 
+    r2_status = upload_file(zip_file, Path(zip_file).name)
+    if r2_status["success"]:
+      message = f"Backup completed successfully and uploaded to R2 bucket '{r2_status.get('bucket')}'"
+    else:
+      message = f"Backup completed locally. (R2: {r2_status['message']})"
+
     result = BackupResult(
       file_name=Path(zip_file).name,
       file_path=zip_file,
@@ -40,7 +47,7 @@ def run_backup_job(job: dict):
       duration=duration,
       status="success",
       type="files",
-      message="Backup completed successfully"
+      message=message
     )
   except Exception as e:
     completed = datetime.now()
@@ -82,6 +89,12 @@ def run_backup(source_path: str | dict):
     completed   = datetime.now()
     duration    = int((completed - started).total_seconds())
 
+    r2_status = upload_file(zip_file, Path(zip_file).name)
+    if r2_status["success"]:
+      message = f"Backup completed successfully and uploaded to R2 bucket '{r2_status.get('bucket')}'"
+    else:
+      message = f"Backup completed locally. (R2: {r2_status['message']})"
+
     result = BackupResult(
       file_name=Path(zip_file).name,
       file_path=zip_file,
@@ -93,7 +106,7 @@ def run_backup(source_path: str | dict):
       duration=duration,
       status="success",
       type="files",
-      message="Backup completed successfully"
+      message=message
     )
   except Exception as e:
     completed = datetime.now()
