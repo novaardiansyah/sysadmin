@@ -54,6 +54,7 @@ def run_backup_job(job: dict):
     result = BackupResult(
       file_name=Path(zip_file).name,
       file_path=zip_file,
+      backup_job_id=job_id,
       cloud_file_path=cloud_file_path,
       file_size=Path(zip_file).stat().st_size,
       checksum=sha256(zip_file),
@@ -72,6 +73,7 @@ def run_backup_job(job: dict):
     result = BackupResult(
       file_name="",
       file_path="",
+      backup_job_id=job_id,
       cloud_file_path=None,
       file_size=0,
       checksum="",
