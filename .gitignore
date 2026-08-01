@@ -15,3 +15,8 @@ AGENTS.md
 
 __pycache__
 backups/
+sysadmin.code-workspace
+
+# Symlinks / References
+/obsidian
+/references

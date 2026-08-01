@@ -9,10 +9,12 @@ from storage.r2 import upload_file
 from config import BACKUP_OUTPUT
 
 def run_backup_job(job: dict):
-  job_id            = job["id"]
-  source_path       = job["source_path"]
-  dest_dir          = job.get("destination_path") or BACKUP_OUTPUT
-  expected_filename = job.get("expected_filename")
+  job_id                 = job["id"]
+  source_path            = job["source_path"]
+  dest_dir               = job.get("destination_path") or BACKUP_OUTPUT
+  expected_filename      = job.get("expected_filename")
+  is_sync_cloud          = job.get("is_sync_cloud") if job.get("is_sync_cloud") is not None else True
+  cloud_destination_path = job.get("cloud_destination_path")
 
   started = datetime.now()
 
@@ -30,15 +32,29 @@ def run_backup_job(job: dict):
     completed   = datetime.now()
     duration    = int((completed - started).total_seconds())
 
-    r2_status = upload_file(zip_file, Path(zip_file).name)
-    if r2_status["success"]:
-      message = f"Backup completed successfully and uploaded to R2 bucket '{r2_status.get('bucket')}'"
+    if is_sync_cloud:
+      file_name = Path(zip_file).name
+      if cloud_destination_path:
+        clean_path = cloud_destination_path.strip("/")
+        object_key = f"{clean_path}/{file_name}" if clean_path else file_name
+      else:
+        object_key = file_name
+
+      r2_status = upload_file(zip_file, object_key)
+      if r2_status["success"]:
+        message         = f"Backup completed successfully and uploaded to the cloud storage"
+        cloud_file_path = object_key
+      else:
+        message         = f"Backup completed locally. (Cloud: {r2_status['message']})"
+        cloud_file_path = None
     else:
-      message = f"Backup completed locally. (R2: {r2_status['message']})"
+      message         = "Backup completed locally. (Cloud sync disabled)"
+      cloud_file_path = None
 
     result = BackupResult(
       file_name=Path(zip_file).name,
       file_path=zip_file,
+      cloud_file_path=cloud_file_path,
       file_size=Path(zip_file).stat().st_size,
       checksum=sha256(zip_file),
       started_at=started.isoformat(),
@@ -56,6 +72,7 @@ def run_backup_job(job: dict):
     result = BackupResult(
       file_name="",
       file_path="",
+      cloud_file_path=None,
       file_size=0,
       checksum="",
       started_at=started.isoformat(),
@@ -91,13 +108,16 @@ def run_backup(source_path: str | dict):
 
     r2_status = upload_file(zip_file, Path(zip_file).name)
     if r2_status["success"]:
-      message = f"Backup completed successfully and uploaded to R2 bucket '{r2_status.get('bucket')}'"
+      message         = f"Backup completed successfully and uploaded to the cloud storage"
+      cloud_file_path = Path(zip_file).name
     else:
-      message = f"Backup completed locally. (R2: {r2_status['message']})"
+      message         = f"Backup completed locally. (Cloud: {r2_status['message']})"
+      cloud_file_path = None
 
     result = BackupResult(
       file_name=Path(zip_file).name,
       file_path=zip_file,
+      cloud_file_path=cloud_file_path,
       file_size=Path(zip_file).stat().st_size,
       checksum=sha256(zip_file),
       started_at=started.isoformat(),
@@ -115,6 +135,7 @@ def run_backup(source_path: str | dict):
     result = BackupResult(
       file_name="",
       file_path="",
+      cloud_file_path=None,
       file_size=0,
       checksum="",
       started_at=started.isoformat(),
