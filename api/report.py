@@ -55,13 +55,16 @@ def store_job_report(job_id, result):
 def send_backup(result):
   headers = {
     "Authorization": f"Bearer {API_KEY}",
-    "Accept":        "application/json"
+    "Accept":        "application/json",
+    "Content-Type":  "application/json"
   }
+
+  payload = result.__dict__ if hasattr(result, "__dict__") else result
 
   response = requests.post(
     f"{API_URL}/backups",
     headers=headers,
-    json=result.__dict__
+    json=payload
   )
 
   response.raise_for_status()
