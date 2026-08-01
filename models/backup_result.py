@@ -11,6 +11,7 @@ class BackupResult:
   duration: int
   status: str
   type: str
+  backup_job_id: int | None = None
   cloud_file_path: str | None = None
   server_name: str | None = None
   message: str | None = None
