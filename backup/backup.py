@@ -15,6 +15,8 @@ def run_backup_job(job: dict):
   expected_filename      = job.get("expected_filename")
   is_sync_cloud          = job.get("is_sync_cloud") if job.get("is_sync_cloud") is not None else True
   cloud_destination_path = job.get("cloud_destination_path")
+  keep_local_raw         = job.get("keep_local_backup")
+  keep_local_backup      = keep_local_raw.lower() not in ("false", "0") if isinstance(keep_local_raw, str) else (bool(keep_local_raw) if keep_local_raw is not None else True)
 
   started = datetime.now()
 
@@ -31,6 +33,8 @@ def run_backup_job(job: dict):
     zip_file    = create_zip(source_path, destination)
     completed   = datetime.now()
     duration    = int((completed - started).total_seconds())
+    file_size   = Path(zip_file).stat().st_size
+    file_hash   = sha256(zip_file)
 
     if is_sync_cloud:
       file_name = Path(zip_file).name
@@ -44,6 +48,11 @@ def run_backup_job(job: dict):
       if r2_status["success"]:
         message         = f"Backup completed successfully and uploaded to the cloud storage"
         cloud_file_path = object_key
+        if not keep_local_backup:
+          try:
+            Path(zip_file).unlink(missing_ok=True)
+          except Exception as e:
+            print(f"Warning: Failed to delete local backup file: {e}")
       else:
         message         = f"Backup completed locally. (Cloud: {r2_status['message']})"
         cloud_file_path = None
@@ -56,8 +65,8 @@ def run_backup_job(job: dict):
       file_path=zip_file,
       backup_job_id=job_id,
       cloud_file_path=cloud_file_path,
-      file_size=Path(zip_file).stat().st_size,
-      checksum=sha256(zip_file),
+      file_size=file_size,
+      checksum=file_hash,
       started_at=started.isoformat(),
       completed_at=completed.isoformat(),
       finished_at=completed.isoformat(),
